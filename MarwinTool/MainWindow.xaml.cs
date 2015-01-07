@@ -226,6 +226,7 @@ namespace MarwinTool
                 // testovaci komentar
                 // testovaci komentar
                 string q = "abc";
+                int i = 99;
                 Sound.MakeSound(Properties.Resources.beep_13);
                 lblInternetConnectionInfo.Content = string.Format("Internet connection is NOT available. [{0}]", DateTime.Now);
                 lblInternetConnectionInfo.Foreground = Brushes.DarkRed;
