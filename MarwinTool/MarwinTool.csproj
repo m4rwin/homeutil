@@ -39,6 +39,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Accessibility" />
+    <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="PresentationUI, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="ReachFramework" />
     <Reference Include="System" />
@@ -46,6 +47,7 @@
     <Reference Include="System.Deployment" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Printing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
@@ -65,6 +67,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Data.cs" />
     <Compile Include="Windows\KeyLoggerWindow.xaml.cs">
       <DependentUpon>KeyLoggerWindow.xaml</DependentUpon>
     </Compile>
@@ -126,6 +129,10 @@
       <Project>{4cfbbf39-7b53-4b69-a1b0-7bde13c27aed}</Project>
       <Name>MUtility</Name>
     </ProjectReference>
+    <ProjectReference Include="..\SendingSMS\SendingSMS.csproj">
+      <Project>{624deca3-8baa-45bd-9274-ad53558db05f}</Project>
+      <Name>SendingSMS</Name>
+    </ProjectReference>
     <ProjectReference Include="..\ShutDown\ShutDown.csproj">
       <Project>{2033ac98-2bc0-44b4-98bd-c1fd025c582b}</Project>
       <Name>ShutDown</Name>
@@ -144,7 +151,12 @@
     <None Include="Resources\spy.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="spy.ico" />
+    <Resource Include="spy.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

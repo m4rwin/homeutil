@@ -1,25 +1,20 @@
 ﻿using AutoStart;
 using MarwinTool.Windows;
+using Microsoft.VisualBasic.Devices;
 using MUtility;
 using ShutDown;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
-using System.Linq;
-using System.Resources;
-using System.Text;
-using System.Threading.Tasks;
-using System.Timers;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Threading;
+using SendingSMS;
+using System.Windows.Forms;
+using WIN = System.Windows;
 
 namespace MarwinTool
 {
@@ -30,7 +25,7 @@ namespace MarwinTool
     {
         #region constant
         private const string AppName = "Marwin`s Tool";
-        private const string AppVersion = "1.4";
+        private const string AppVersion = "1.5";
         #endregion
 
         #region properties
@@ -45,8 +40,15 @@ namespace MarwinTool
         DateTime ApplicationStart;
         DispatcherTimer tmrApplicationUpdate;
 
+        DispatcherTimer tmrKeyCounter;
+
         // KeyLoggerWindow instance
         KeyLoggerWindow KeyLogWin;
+
+        Data AppData;
+
+        // Notification icon
+        NotifyIcon NotifyIcone;
         #endregion
 
         #region c-tor
@@ -54,23 +56,32 @@ namespace MarwinTool
         {
             InitializeComponent();
             MyInit();
+            CreateMyNotifyIcon();
         }
         #endregion 
 
         #region myinit
         private void MyInit()
         {
+            AppData = new Data();
+
             this.Title = string.Format("{0} {1}", AppName, AppVersion);
             tmrNetworkConnection = new DispatcherTimer();
             tmrNetworkConnection.Tick += tmrNetworkConnection_Tick;
             tmrNetworkConnection_Tick(null, null);
             tmrNetworkConnection.Interval = new TimeSpan(0, 0, 10);
             tmrNetworkConnection.Start();
+
+            tmrKeyCounter = new DispatcherTimer();
+            tmrKeyCounter.Tick += tmrKeyCounter_Tick;
+            tmrKeyCounter.Interval = new TimeSpan(0,0,1);
+            tmrKeyCounter.Start();
+
             
 
             if (AutostartCore.IsOnStartup())
             {
-                lblAutostartInfo.Content = "Autostart is set.";
+                lblAutostartInfo.Content = string.Format("[{0}] Autostart is set.", AutostartCore.GetVersion());
                 lblAutostartInfo.Foreground = Brushes.DarkGreen;
             }
             else { lblAutostartInfo.Content = "Autostart is not set."; lblAutostartInfo.Foreground = Brushes.DarkRed; }
@@ -87,6 +98,21 @@ namespace MarwinTool
             tmrApplicationUpdate.Start();
 
             KeyLogWin = new KeyLoggerWindow(this);
+        }
+
+        private void CreateMyNotifyIcon()
+        {
+            NotifyIcone = new NotifyIcon();
+            NotifyIcone.Icon = new System.Drawing.Icon("spy.ico");
+            NotifyIcone.Visible = true;
+            this.WindowState = WIN.WindowState.Minimized;
+            NotifyIcone.DoubleClick +=
+                delegate(object sender, EventArgs args)
+                {
+                    this.Show();
+                    this.WindowState = System.Windows.WindowState.Normal;
+                };
+            Window_StateChanged(null, null);
         }
         #endregion
 
@@ -157,6 +183,25 @@ namespace MarwinTool
                 else { btnCountingDown.Content = "Start"; lblMinutes.Content = "???"; }
             }
         }
+
+        private void btnGetRAM_Click(object sender, RoutedEventArgs e)
+        {
+            ComputerInfo info = new ComputerInfo();
+            lblRAM.Content = string.Format("RAM: {0} MB / {1} MB", (info.AvailablePhysicalMemory / 1024 / 1024).ToString("G"), (info.TotalPhysicalMemory / 1024 / 1024).ToString("G"));
+
+            PerformanceCounter cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total", true);
+            cpuCounter.NextValue();
+            System.Threading.Thread.Sleep(1000); // wait a second to get a valid reading
+            lblCPU.Content = "CPU: " + (int)cpuCounter.NextValue() + "%";
+        }
+
+        private void SendSMS_Click(object sender, RoutedEventArgs e)
+        {
+            lblSMSresult.Content = "---";
+            bool b = SMS.sendEmail(string.Format("00{0}@sms.cz.o2.com", tbxPhoneNumber.Text), tbxSMStext.Text);
+            if (b) { lblSMSresult.Content = "Sent."; lblSMSresult.Foreground = new SolidColorBrush(Colors.DarkGreen); }
+            else { lblSMSresult.Content = "Err."; lblSMSresult.Foreground = new SolidColorBrush(Colors.DarkRed); }
+        }
         #endregion
 
         #region checkbox events
@@ -202,16 +247,17 @@ namespace MarwinTool
             {
                 tmrAction.Stop();
                 Sound.MakeSound(Properties.Resources.beep_13);
-                MessageBox.Show("Do Action...");
+                WIN.MessageBox.Show("Do Action...");
             }
         }
 
         bool previousPing = true;
         private void tmrNetworkConnection_Tick(object sender, EventArgs e)
         {
-            if (Network.Ping())
+            if (MUtility.Network.Ping())
             {
-                lblInternetConnectionInfo.Content = string.Format("Internet connection is available. [{0}]", DateTime.Now);
+                AppData.LastOnlineTime = DateTime.Now;
+                lblInternetConnectionInfo.Content = string.Format("Internet connection is available. [{0}]", AppData.LastOnlineTime);
                 lblInternetConnectionInfo.Foreground = Brushes.DarkGreen;
                 previousPing = true;
             }
@@ -236,8 +282,106 @@ namespace MarwinTool
         {
             TimeSpan during = DateTime.Now - ApplicationStart;
             //lblRunningInfo.Content = string.Format("Application start at: {0} (during: {1})", ApplicationStart, during.ToString2());
-            lblRunningInfo.Content = string.Format("Application start at: {0} (during: {1})", ApplicationStart, during);
+            lblRunningInfo.Content = string.Format("Application start at: {0} (running: {1}d {2}h {3}m)", ApplicationStart, during.Days, during.Hours, during.Minutes);
         }
         #endregion
+
+        #region app events
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            System.Environment.Exit(0);
+        }
+
+        private void Window_StateChanged(object sender, EventArgs e)
+        {
+            if (WindowState == System.Windows.WindowState.Minimized)
+            {
+                this.Hide();
+                NotifyIcone.BalloonTipText = "Application was minimalized to system tray.";
+                NotifyIcone.ShowBalloonTip(2000);
+            }
+            //base.OnStateChanged(e);
+        }
+        #endregion
+
+        #region expander
+        private void Expander_Expanded(object sender, RoutedEventArgs e)
+        {
+            MainGrid.RowDefinitions[6].Height = new GridLength(MainGrid.RowDefinitions[6].Height.Value + 40);
+            this.Height += 40;
+        }
+
+        private void Expander_Collapsed(object sender, RoutedEventArgs e)
+        {
+            MainGrid.RowDefinitions[6].Height = new GridLength(MainGrid.RowDefinitions[6].Height.Value - 40);
+            this.Height -= 40;
+        }
+
+        private void Expander_Collapsed_1(object sender, RoutedEventArgs e)
+        {
+            MainGrid.RowDefinitions[6].Height = new GridLength(MainGrid.RowDefinitions[6].Height.Value - 40);
+            this.Height -= 40;
+        }
+
+        private void Expander_Expanded_1(object sender, RoutedEventArgs e)
+        {
+            MainGrid.RowDefinitions[6].Height = new GridLength(MainGrid.RowDefinitions[6].Height.Value + 40);
+            this.Height += 40;
+        }
+        #endregion 
+
+        private void cmbProcesses_Initialized(object sender, EventArgs e)
+        {
+            Process[] allProcceses = Process.GetProcesses();
+            List<string> processes = new List<string>();
+            foreach (Process p in allProcceses) { processes.Add(p.ProcessName + " - " + (p.PrivateMemorySize64 / 1024 / 1024).ToString("G") + " MB"); }
+            processes.Sort();
+
+            cmbProcesses.ItemsSource = processes;
+        }
+
+
+
+
+
+
+        private static int LeftMouseClick = 0;
+        private static int RightMouseClick = 0;
+        private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            LeftMouseClick++;
+            this.Title = string.Format("{0} {1} | mouse [l:{2}, r:{3}]", AppName, AppVersion, LeftMouseClick, RightMouseClick);
+        }
+
+        private void Window_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            RightMouseClick++;
+            this.Title = string.Format("{0} {1} | mouse [l:{2}, r:{3}]", AppName, AppVersion, LeftMouseClick, RightMouseClick);
+        }
+
+        private static int keyCounter;
+        private static string text;
+        private void tmrKeyCounter_Tick(object sender, EventArgs e)
+        {
+            text = KeyLogger.Key.GetBuffKeys();
+            keyCounter += text.Length;
+            this.Title = string.Format("{0} {1} | mouse [l:{2}, r:{3}] key: {4}", AppName, AppVersion, LeftMouseClick, RightMouseClick, keyCounter);
+        }
+
+        #region WatchObjects
+        public void WatchObject(object obj)
+        {
+            INotifyPropertyChanged watchableObject = obj as INotifyPropertyChanged;
+            if (watchableObject != null)
+            {
+                //watchableObject.PropertyChanged += new PropertyChangedEventHandler(data_PropertyChanged);
+            }
+        }
+        #endregion
+
+        public void data_PropertyChanged(object sender, PropertyChangingEventArgs e)
+        {
+            WIN.MessageBox.Show("---");
+        }
     }
 }
