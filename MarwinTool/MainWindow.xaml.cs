@@ -258,7 +258,7 @@ namespace MarwinTool
             if (MUtility.Network.Ping())
             {
                 AppData.LastOnlineTime = DateTime.Now;
-                lblInternetConnectionInfo.Content = string.Format("Internet connection is available. [{0}]", AppData.LastOnlineTime);
+                lblInternetConnectionInfo.Content = string.Format("[{0}] Internet connection is available. [{1}]", Data.GetVersion(), AppData.LastOnlineTime);
                 lblInternetConnectionInfo.Foreground = Brushes.DarkGreen;
                 previousPing = true;
             }
@@ -297,9 +297,11 @@ namespace MarwinTool
         {
             if (WindowState == System.Windows.WindowState.Minimized)
             {
+                /*
                 this.Hide();
                 NotifyIcone.BalloonTipText = "Application was minimalized to system tray.";
                 NotifyIcone.ShowBalloonTip(2000);
+                */
             }
             //base.OnStateChanged(e);
         }

@@ -33,5 +33,12 @@ namespace MarwinTool
             }
         }
         #endregion
+
+        #region Static
+        public static string GetVersion()
+        {
+            return "0.1";
+        }
+        #endregion
     }
 }
