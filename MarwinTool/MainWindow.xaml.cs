@@ -77,6 +77,7 @@ namespace MarwinTool
             tmrKeyCounter.Interval = new TimeSpan(0,0,1);
             tmrKeyCounter.Start();
 
+
             
 
             if (AutostartCore.IsOnStartup())
