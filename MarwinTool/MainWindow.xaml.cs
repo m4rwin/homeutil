@@ -104,7 +104,7 @@ namespace MarwinTool
         private void CreateMyNotifyIcon()
         {
             NotifyIcone = new NotifyIcon();
-            NotifyIcone.Icon = new System.Drawing.Icon("spy.ico");
+            //NotifyIcone.Icon = new System.Drawing.Icon("spy.ico");
             NotifyIcone.Visible = true;
             this.WindowState = WIN.WindowState.Minimized;
             NotifyIcone.DoubleClick +=
