@@ -81,8 +81,8 @@
                 <TextBox x:Name="tbxPhoneNumber" Width="100" />
                 <Label Content="Text:"/>
                 <TextBox x:Name="tbxSMStext" Width="150"/>
-                <Button x:Name="SendSMS" Content="SEND" Width="60" Margin="5,0,0,0" Click="SendSMS_Click"/>
-                <Label x:Name="lblSMSresult" Content="(only O2)" Foreground="DarkBlue"  FontWeight="Bold"/>
+                <Button x:Name="SendSMS" Content="SEND" Width="50" Margin="5,0,0,0" Click="SendSMS_Click"/>
+                <Label x:Name="lblSMSresult" Content="(only O2 Telef.)" Foreground="DarkBlue"  FontWeight="Bold"/>
             </StackPanel>
         </GroupBox>
         
