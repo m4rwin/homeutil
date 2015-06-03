@@ -25,7 +25,7 @@ namespace MarwinTool
     {
         #region constant
         private const string AppName = "Marwin`s Tool";
-        private const string AppVersion = "1.5";
+        private const string AppVersion = "1.6";
         #endregion
 
         #region properties
